@@ -19,21 +19,16 @@ async function initBrowser() {
   browser = await chromium.launch({
     headless: config.headless,
     slowMo: config.slowMotion,
-    proxy: { server: 'socks5://127.0.0.1:9050' },
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-blink-features=AutomationControlled',
       '--disable-infobars',
-      '--disable-gpu',
-      '--disable-dev-shm-usage',
+      '--disable-gpu',                 // Required for headless on GCP / Linux VMs
+      '--disable-dev-shm-usage',       // Prevents crashes in containers with small /dev/shm
       '--disable-extensions',
       '--no-first-run',
       '--no-default-browser-check',
-      '--disable-web-security',
-      '--allow-running-insecure-content',
-      '--disable-features=IsolateOrigins,site-per-process',
-      '--window-size=1366,768',
     ],
   });
 

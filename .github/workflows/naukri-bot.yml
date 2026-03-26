@@ -4,7 +4,7 @@ on:
   schedule:
     # 9:00 AM IST = 3:30 AM UTC
     - cron: '30 3 * * *'
-  workflow_dispatch: # allow manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   run-bot:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Write .env file
         run: |
-          cat > .env <<'EOF'
+          cat > .env << EOF
           NAUKRI_EMAIL=${{ secrets.NAUKRI_EMAIL }}
           NAUKRI_PASSWORD=${{ secrets.NAUKRI_PASSWORD }}
           SMTP_HOST=smtp.gmail.com
@@ -40,40 +40,21 @@ jobs:
           ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
           TIMEZONE=Asia/Kolkata
           NAUKRI_HOME_URL=https://www.naukri.com/
-          NAUKRI_LOGIN_URL=https://www.naukri.com/nlogin/login
           NAUKRI_PROFILE_URL=https://www.naukri.com/mnjuser/profile
-          UPDATE_WINDOW_START=9
-          UPDATE_WINDOW_END=12
-          UPLOAD_WINDOW_START=10
-          UPLOAD_WINDOW_END=11
-          MAX_RETRIES=3
-          RETRY_DELAY_MS=2000
+          HEADLESS=true
+          SLOW_MO=0
           LOG_LEVEL=INFO
           LOG_FILE=logs/naukri_bot.log
-          HEADLESS=true
-          SLOW_MO=100
           USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
           NODE_ENV=production
           EOF
-          # trim leading spaces from heredoc
           sed -i 's/^ *//' .env
 
-      - name: Write encrypted credentials
-        run: |
-          node -e "
-          require('dotenv').config();
-          const { encryptCredentials } = require('./src/auth/encryption');
-          encryptCredentials(process.env.NAUKRI_EMAIL, process.env.NAUKRI_PASSWORD);
-          console.log('Credentials encrypted.');
-          "
-
-      - name: Create logs directory
+      - name: Create dirs
         run: mkdir -p logs debug
 
-      - name: Run bot (once)
-        run: node src/index.js --run-once
-        env:
-          NODE_ENV: production
+      - name: Run bot
+        run: node src/cloud-run.js
 
       - name: Upload logs on failure
         if: failure()
