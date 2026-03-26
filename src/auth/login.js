@@ -1,6 +1,7 @@
 const { createComponentLogger } = require('../utils/logger');
 const { loadSelectors, loadAppConfig } = require('../utils/config');
 const { randomDelay, simulateTyping } = require('../automation/delays');
+const { fetchNaukriOTP } = require('./otpReader');
 
 const log = createComponentLogger('Auth');
 
@@ -88,7 +89,16 @@ async function performLogin(page, email, password) {
 
     log.info('Login button clicked. Waiting for response...');
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-    await randomDelay(3000, 5000);
+    await randomDelay(2000, 3000);
+
+    // Handle OTP screen if Naukri asks for verification
+    const otpHandled = await handleOTPIfPresent(page);
+    if (otpHandled === false) {
+      // OTP screen detected but failed to complete it
+      return false;
+    }
+
+    await randomDelay(2000, 3000);
 
     // Check success: should no longer be on the login page
     const currentUrl = page.url();
@@ -158,6 +168,83 @@ async function findLoginEmailField(page, selectors) {
     }
   }
   return null;
+}
+
+/**
+ * Detect OTP screen and fill it automatically from Gmail.
+ * Returns true if no OTP needed or OTP succeeded, false if failed.
+ */
+async function handleOTPIfPresent(page) {
+  try {
+    // Common OTP input selectors Naukri uses
+    const otpSelectors = [
+      'input[placeholder*="OTP" i]',
+      'input[placeholder*="verification" i]',
+      'input[name="otp"]',
+      'input[type="tel"][maxlength="6"]',
+      'input[maxlength="6"]',
+      'input[autocomplete="one-time-code"]',
+    ];
+
+    let otpField = null;
+    for (const sel of otpSelectors) {
+      try {
+        const el = page.locator(sel).first();
+        if (await el.isVisible({ timeout: 3000 })) {
+          otpField = el;
+          log.info(`OTP screen detected (field: ${sel})`);
+          break;
+        }
+      } catch { /* try next */ }
+    }
+
+    if (!otpField) return true; // no OTP screen, all good
+
+    const email = process.env.NAUKRI_EMAIL;
+    const appPass = process.env.NAUKRI_EMAIL_APP_PASS;
+    if (!appPass) {
+      log.error('OTP screen detected but NAUKRI_EMAIL_APP_PASS not set');
+      return false;
+    }
+
+    log.info('Fetching OTP from Gmail...');
+    const otp = await fetchNaukriOTP(email, appPass);
+    if (!otp) {
+      log.error('Could not retrieve OTP from Gmail');
+      return false;
+    }
+
+    log.info(`Entering OTP: ${otp}`);
+    await otpField.click();
+    await randomDelay(300, 600);
+    await simulateTyping(page, otpField, otp);
+    await randomDelay(500, 1000);
+
+    // Click submit/verify button
+    const submitSelectors = [
+      'button[type="submit"]',
+      'button:has-text("Verify")',
+      'button:has-text("Submit")',
+      'button:has-text("Continue")',
+    ];
+    for (const sel of submitSelectors) {
+      try {
+        const btn = page.locator(sel).first();
+        if (await btn.isVisible({ timeout: 2000 })) {
+          await btn.click();
+          log.info('OTP submitted');
+          await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+          return true;
+        }
+      } catch { /* try next */ }
+    }
+
+    log.warn('OTP entered but could not find submit button');
+    return true;
+  } catch (err) {
+    log.error(`OTP handling error: ${err.message}`);
+    return false;
+  }
 }
 
 /**

@@ -38,6 +38,7 @@ jobs:
           SMTP_PASS=${{ secrets.SMTP_PASS }}
           SMTP_TO=${{ secrets.SMTP_TO }}
           ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+          NAUKRI_EMAIL_APP_PASS=${{ secrets.NAUKRI_EMAIL_APP_PASS }}
           TIMEZONE=Asia/Kolkata
           NAUKRI_HOME_URL=https://www.naukri.com/
           NAUKRI_PROFILE_URL=https://www.naukri.com/mnjuser/profile
