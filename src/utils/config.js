@@ -51,6 +51,7 @@ function loadAppConfig() {
     userAgent: process.env.USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     urls: {
       home: process.env.NAUKRI_HOME_URL || 'https://www.naukri.com/',
+      login: process.env.NAUKRI_LOGIN_URL || 'https://www.naukri.com/nlogin/login',
       profile: process.env.NAUKRI_PROFILE_URL || 'https://www.naukri.com/mnjuser/profile',
       get profileModal() { return this.profile + '?action=modalOpen'; },
     },

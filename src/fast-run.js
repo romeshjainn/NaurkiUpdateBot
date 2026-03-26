@@ -53,10 +53,8 @@ async function run() {
   const config = loadAppConfig();
   validateResumeFile(config.resumePath);
 
-  // ── Launch browser in visible mode ──
-  log.info('Launching browser (visible mode)...');
-  // Force headless off so you can watch
-  process.env.HEADLESS = 'false';
+  // ── Launch browser ──
+  log.info(`Launching browser (headless: ${process.env.HEADLESS !== 'false'})...`);
   const { context, page } = await initBrowser();
 
   try {

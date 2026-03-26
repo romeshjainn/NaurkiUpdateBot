@@ -129,8 +129,12 @@ async function main() {
     process.exit(1);
   }
 
-  // Random sleep within the 9–12 IST window
-  await randomWindowSleep();
+  // Random sleep within the 9–12 IST window (skip if SKIP_SLEEP=true for manual runs)
+  if (process.env.SKIP_SLEEP !== 'true') {
+    await randomWindowSleep();
+  } else {
+    log.info('SKIP_SLEEP=true — skipping random window sleep');
+  }
 
   const config = loadAppConfig();
 

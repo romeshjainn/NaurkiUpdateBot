@@ -19,24 +19,11 @@ async function performLogin(page, email, password) {
   log.info('Starting login process...');
 
   try {
-    // Go to home page
-    await page.goto(config.urls.home, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // Go directly to the login page
+    await page.goto(config.urls.login, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await randomDelay(2000, 3000);
 
-    // Check if a login form is already visible (some flows redirect to login)
     let emailField = await findLoginEmailField(page, selectors);
-
-    // If not visible, click the login nav trigger to open the form
-    if (!emailField) {
-      log.info('Login form not immediately visible. Clicking login nav trigger...');
-      const triggered = await clickLoginTrigger(page, selectors);
-      if (!triggered) {
-        await page.screenshot({ path: 'debug/login_trigger_not_found.png', fullPage: true });
-        throw new Error('Could not find login trigger on home page. See debug screenshot.');
-      }
-      await randomDelay(1500, 2500);
-      emailField = await findLoginEmailField(page, selectors);
-    }
 
     if (!emailField) {
       await page.screenshot({ path: 'debug/login_email_not_found.png', fullPage: true });

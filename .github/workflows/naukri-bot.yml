@@ -55,6 +55,8 @@ jobs:
 
       - name: Run bot
         run: node src/cloud-run.js
+        env:
+          SKIP_SLEEP: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
 
       - name: Upload logs on failure
         if: failure()
