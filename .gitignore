@@ -5,4 +5,4 @@ config/session.json
 logs/
 debug/
 *.png
-resume.pdf
+
