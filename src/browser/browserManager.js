@@ -11,14 +11,36 @@ let page = null;
 /**
  * Initialize Playwright browser with human-like settings
  */
+const PROXIES = [
+  '31.59.20.176:6754:njaztstr:dfulqprhrd34',
+  '23.95.150.145:6114:njaztstr:dfulqprhrd34',
+  '198.23.239.134:6540:njaztstr:dfulqprhrd34',
+  '45.38.107.97:6014:njaztstr:dfulqprhrd34',
+  '107.172.163.27:6543:njaztstr:dfulqprhrd34',
+  '198.105.121.200:6462:njaztstr:dfulqprhrd34',
+  '216.10.27.159:6837:njaztstr:dfulqprhrd34',
+  '142.111.67.146:5611:njaztstr:dfulqprhrd34',
+  '191.96.254.138:6185:njaztstr:dfulqprhrd34',
+  '31.58.9.4:6077:njaztstr:dfulqprhrd34',
+];
+
+function getRandomProxy() {
+  const entry = PROXIES[Math.floor(Math.random() * PROXIES.length)];
+  const [host, port, username, password] = entry.split(':');
+  return { server: `http://${host}:${port}`, username, password };
+}
+
 async function initBrowser() {
   const config = loadAppConfig();
+  const proxy = getRandomProxy();
 
   log.info(`Launching browser (headless: ${config.headless})...`);
+  log.info(`Using proxy: ${proxy.server}`);
 
   browser = await chromium.launch({
     headless: config.headless,
     slowMo: config.slowMotion,
+    proxy,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
