@@ -1,0 +1,51 @@
+{
+  "loginNavTrigger": {
+    "label": "Login nav button",
+    "selectors": [
+      "a[href*='nlogin']",
+      "a.nI-gNb-lg1__login",
+      "a[title='Jobseeker Login']",
+      "a[title='Login']",
+      ".login-register a",
+      "a:has-text('Login')"
+    ]
+  },
+  "loginForm": {
+    "emailField": [
+      "input#usernameField",
+      "input[placeholder*='Enter your active Email' i]",
+      "input[type='text'][name='username']",
+      "input[name='username']"
+    ],
+    "passwordField": [
+      "input#passwordField",
+      "input[type='password'][name='password']",
+      "input[placeholder*='password' i]",
+      "input[name='password']"
+    ],
+    "loginButton": [
+      "button.loginButton",
+      "button[type='submit']:has-text('Login')",
+      "button[type='submit']",
+      "input[type='submit']"
+    ]
+  },
+  "resumeHeadlineField": {
+    "label": "Resume headline",
+    "editTrigger": ".widgetHead:has(.widgetTitle:text('Resume headline')) span.edit.icon",
+    "formSelector": "form[name='resumeHeadlineForm']",
+    "textareaSelector": "textarea#resumeHeadlineTxt",
+    "saveButtonSelector": "form[name='resumeHeadlineForm'] button.btn-dark-ot"
+  },
+  "profileSummaryField": {
+    "label": "Profile summary",
+    "editTrigger": ".widgetHead:has(.widgetTitle:text('Profile summary')) span.edit.icon",
+    "formSelector": "form[name='profileSummaryForm']",
+    "textareaSelector": "textarea#profileSummaryTxt",
+    "saveButtonSelector": "form[name='profileSummaryForm'] button.btn-dark-ot"
+  },
+  "resumeUpload": {
+    "label": "Resume upload",
+    "triggerSelector": "input.dummyUpload"
+  }
+}

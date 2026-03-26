@@ -1,0 +1,35 @@
+{
+  "name": "naukri-automation-bot",
+  "version": "1.0.0",
+  "description": "Naukri Profile Automation Bot - Automate daily profile optimization for maximum recruiter visibility",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "setup": "node src/setup.js",
+    "fast": "node src/fast-run.js",
+    "headline": "node src/run-action.js --action headline",
+    "summary": "node src/run-action.js --action summary",
+    "resume": "node src/run-action.js --action resume",
+    "test:selectors": "node test/testSelectors.js",
+    "dev": "nodemon src/index.js",
+    "run:once": "node src/index.js --run-once",
+    "cloud": "node src/cloud-run.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^8.0.4",
+    "playwright": "^1.40.0",
+    "readline-sync": "^1.4.10",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "author": "Romesh Jain",
+  "license": "PRIVATE"
+}

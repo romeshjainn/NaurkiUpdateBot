@@ -1,0 +1,16 @@
+{
+  "resumePath": "./resume.pdf",
+  "resumeFileName": "RomeshJain_SoftwareEngineer_2years",
+  "maxRetries": 3,
+  "retryDelayMs": 2000,
+  "headless": true,
+  "slowMotion": 100,
+  "updateWindowStart": 9,
+  "updateWindowEnd": 12,
+  "uploadWindowStart": 10,
+  "uploadWindowEnd": 11,
+  "timezone": "Asia/Kolkata",
+  "logLevel": "INFO",
+  "sessionMaxAgeDays": 30,
+  "minGapBetweenJobsMinutes": 30
+}
