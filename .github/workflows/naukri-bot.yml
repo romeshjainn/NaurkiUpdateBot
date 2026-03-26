@@ -1,0 +1,67 @@
+name: Naukri Daily Bot
+
+on:
+  schedule:
+    # 9:00 AM IST = 3:30 AM UTC
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Write .env file
+        run: |
+          cat > .env << EOF
+          NAUKRI_EMAIL=${{ secrets.NAUKRI_EMAIL }}
+          NAUKRI_PASSWORD=${{ secrets.NAUKRI_PASSWORD }}
+          SMTP_HOST=smtp.gmail.com
+          SMTP_PORT=587
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          SMTP_TO=${{ secrets.SMTP_TO }}
+          ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+          TIMEZONE=Asia/Kolkata
+          NAUKRI_HOME_URL=https://www.naukri.com/
+          NAUKRI_PROFILE_URL=https://www.naukri.com/mnjuser/profile
+          HEADLESS=true
+          SLOW_MO=0
+          LOG_LEVEL=INFO
+          LOG_FILE=logs/naukri_bot.log
+          USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+          NODE_ENV=production
+          EOF
+          sed -i 's/^ *//' .env
+
+      - name: Create dirs
+        run: mkdir -p logs debug
+
+      - name: Run bot
+        run: node src/cloud-run.js
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-logs
+          path: |
+            logs/
+            debug/
+          retention-days: 3
