@@ -1,4 +1,6 @@
-const { chromium } = require('playwright');
+const { chromium } = require('playwright-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+chromium.use(StealthPlugin());
 const { createComponentLogger } = require('../utils/logger');
 const { loadAppConfig } = require('../utils/config');
 
