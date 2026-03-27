@@ -1,9 +1,114 @@
+const fs = require('fs');
+const path = require('path');
 const { createComponentLogger } = require('../utils/logger');
 const { loadSelectors, loadAppConfig } = require('../utils/config');
 const { randomDelay, simulateTyping } = require('../automation/delays');
 const { fetchNaukriOTP } = require('./otpReader');
 
 const log = createComponentLogger('Auth');
+
+// Ensure debug dir exists
+const DEBUG_DIR = path.join(process.cwd(), 'debug');
+if (!fs.existsSync(DEBUG_DIR)) fs.mkdirSync(DEBUG_DIR, { recursive: true });
+
+/**
+ * Dump current page state to console + debug files.
+ * Call this at any point login is misbehaving to get full visibility.
+ *
+ * Logs:
+ *  - Current URL
+ *  - All visible <input> elements (id, name, type, placeholder, class)
+ *  - All visible <button> elements (text, type, class)
+ *  - Any on-page error/alert text
+ *
+ * Saves:
+ *  - debug/diag_<label>_<ts>.html  — full page HTML
+ *  - debug/diag_<label>_<ts>.png   — screenshot
+ */
+async function dumpPageDiagnostics(page, label) {
+  const ts = Date.now();
+  const tag = `${label}_${ts}`;
+
+  try {
+    const url = page.url();
+    log.info(`[DIAG:${label}] URL: ${url}`);
+
+    // Collect all input elements
+    const inputs = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('input')).map((el) => ({
+        id: el.id || '',
+        name: el.name || '',
+        type: el.type || '',
+        placeholder: el.placeholder || '',
+        className: el.className || '',
+        visible: el.offsetParent !== null,
+      }));
+    });
+    const visibleInputs = inputs.filter((i) => i.visible);
+    if (visibleInputs.length === 0) {
+      log.warn(`[DIAG:${label}] No visible inputs found on page`);
+    } else {
+      log.info(`[DIAG:${label}] Visible inputs (${visibleInputs.length}):`);
+      visibleInputs.forEach((i) => {
+        log.info(`  <input id="${i.id}" name="${i.name}" type="${i.type}" placeholder="${i.placeholder}" class="${i.className}">`);
+      });
+    }
+
+    // Collect all button elements
+    const buttons = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('button, input[type="submit"]')).map((el) => ({
+        tag: el.tagName,
+        type: el.type || '',
+        text: el.innerText?.trim() || el.value || '',
+        className: el.className || '',
+        visible: el.offsetParent !== null,
+      }));
+    });
+    const visibleButtons = buttons.filter((b) => b.visible);
+    if (visibleButtons.length === 0) {
+      log.warn(`[DIAG:${label}] No visible buttons found on page`);
+    } else {
+      log.info(`[DIAG:${label}] Visible buttons (${visibleButtons.length}):`);
+      visibleButtons.forEach((b) => {
+        log.info(`  <${b.tag.toLowerCase()} type="${b.type}" class="${b.className}"> "${b.text}"`);
+      });
+    }
+
+    // Collect any error/alert text
+    const errorText = await page.evaluate(() => {
+      const selectors = [
+        '[class*="error" i]', '[class*="erMsg" i]', '[class*="alert" i]',
+        '[class*="invalid" i]', '[class*="warning" i]', '.alert-danger',
+      ];
+      const texts = [];
+      for (const sel of selectors) {
+        document.querySelectorAll(sel).forEach((el) => {
+          const t = el.innerText?.trim();
+          if (t) texts.push(`${sel}: "${t}"`);
+        });
+      }
+      return [...new Set(texts)];
+    });
+    if (errorText.length > 0) {
+      log.error(`[DIAG:${label}] Error/alert text found on page:`);
+      errorText.forEach((t) => log.error(`  ${t}`));
+    }
+
+    // Save HTML snapshot
+    const html = await page.content();
+    const htmlPath = path.join(DEBUG_DIR, `diag_${tag}.html`);
+    fs.writeFileSync(htmlPath, html, 'utf8');
+    log.info(`[DIAG:${label}] HTML snapshot: debug/diag_${tag}.html`);
+
+    // Save screenshot
+    const imgPath = path.join(DEBUG_DIR, `diag_${tag}.png`);
+    await page.screenshot({ path: imgPath, fullPage: true });
+    log.info(`[DIAG:${label}] Screenshot: debug/diag_${tag}.png`);
+
+  } catch (err) {
+    log.warn(`[DIAG:${label}] Diagnostics failed: ${err.message}`);
+  }
+}
 
 /**
  * Perform login on Naukri using credentials.
@@ -24,14 +129,18 @@ async function performLogin(page, email, password) {
     await page.goto(config.urls.login, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await randomDelay(2000, 3000);
 
+    // Dump page state immediately after load so we know exactly what's on screen
+    await dumpPageDiagnostics(page, 'after_page_load');
+
     let emailField = await findLoginEmailField(page, selectors);
 
     if (!emailField) {
-      await page.screenshot({ path: 'debug/login_email_not_found.png', fullPage: true });
-      throw new Error('Could not locate email input field after triggering login. See debug screenshot.');
+      log.error('Could not locate email input field. Tried selectors: ' + selectors.loginForm.emailField.join(' | '));
+      await dumpPageDiagnostics(page, 'email_field_not_found');
+      throw new Error('Could not locate email input field. See debug/diag_email_field_not_found_*.html');
     }
 
-    log.debug('Email field located. Typing email...');
+    log.info('Email field located. Typing email...');
     await emailField.click();
     await randomDelay(300, 600);
     await emailField.fill('');
@@ -45,7 +154,7 @@ async function performLogin(page, email, password) {
         const el = page.locator(selector).first();
         if (await el.isVisible({ timeout: 2000 })) {
           passwordField = el;
-          log.debug(`Password field found: ${selector}`);
+          log.info(`Password field found via: ${selector}`);
           break;
         }
       } catch {
@@ -54,8 +163,9 @@ async function performLogin(page, email, password) {
     }
 
     if (!passwordField) {
-      await page.screenshot({ path: 'debug/login_password_not_found.png', fullPage: true });
-      throw new Error('Could not locate password input field. See debug screenshot.');
+      log.error('Could not locate password field. Tried selectors: ' + selectors.loginForm.passwordField.join(' | '));
+      await dumpPageDiagnostics(page, 'password_field_not_found');
+      throw new Error('Could not locate password input field. See debug/diag_password_field_not_found_*.html');
     }
 
     await passwordField.click();
@@ -71,7 +181,7 @@ async function performLogin(page, email, password) {
         const el = page.locator(selector).first();
         if (await el.isVisible({ timeout: 2000 })) {
           loginButton = el;
-          log.debug(`Login button found: ${selector}`);
+          log.info(`Login button found via: ${selector}`);
           break;
         }
       } catch {
@@ -80,8 +190,9 @@ async function performLogin(page, email, password) {
     }
 
     if (!loginButton) {
-      await page.screenshot({ path: 'debug/login_button_not_found.png', fullPage: true });
-      throw new Error('Could not locate login button. See debug screenshot.');
+      log.error('Could not locate login button. Tried selectors: ' + selectors.loginForm.loginButton.join(' | '));
+      await dumpPageDiagnostics(page, 'login_button_not_found');
+      throw new Error('Could not locate login button. See debug/diag_login_button_not_found_*.html');
     }
 
     await randomDelay(500, 1000);
@@ -91,10 +202,13 @@ async function performLogin(page, email, password) {
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
     await randomDelay(2000, 3000);
 
+    // Dump state immediately after submit — reveals OTP screen, error, redirect, etc.
+    await dumpPageDiagnostics(page, 'after_submit');
+
     // Handle OTP screen if Naukri asks for verification
     const otpHandled = await handleOTPIfPresent(page);
     if (otpHandled === false) {
-      // OTP screen detected but failed to complete it
+      await dumpPageDiagnostics(page, 'otp_failed');
       return false;
     }
 
@@ -102,20 +216,11 @@ async function performLogin(page, email, password) {
 
     // Check success: should no longer be on the login page
     const currentUrl = page.url();
+    log.info(`Post-login URL: ${currentUrl}`);
+
     if (currentUrl.includes('nlogin') || currentUrl.includes('/login')) {
-      // Still on login — look for an error message
-      try {
-        const errorEl = page.locator('[class*="error" i], [class*="erMsg" i], .alert-danger').first();
-        if (await errorEl.isVisible({ timeout: 2000 })) {
-          const text = await errorEl.textContent();
-          log.error(`Login error message: ${text.trim()}`);
-          return false;
-        }
-      } catch {
-        // no visible error
-      }
-      log.warn('Still on login page after submitting. Login may have failed.');
-      await page.screenshot({ path: 'debug/login_still_on_page.png', fullPage: true });
+      log.error('Still on login page after submitting. Dumping full page state...');
+      await dumpPageDiagnostics(page, 'still_on_login');
       return false;
     }
 
@@ -124,9 +229,9 @@ async function performLogin(page, email, password) {
   } catch (err) {
     log.error(`Login error: ${err.message}`);
     try {
-      await page.screenshot({ path: `debug/login_error_${Date.now()}.png`, fullPage: true });
+      await dumpPageDiagnostics(page, 'exception');
     } catch {
-      // screenshot failed
+      // diagnostics also failed
     }
     return false;
   }
