@@ -6,7 +6,22 @@ const { randomDelay, simulateTyping } = require('../automation/delays');
 const { fetchNaukriOTP } = require('./otpReader');
 const { snap } = require('../utils/screenshot');
 
+const readline = require('readline');
+
 const log = createComponentLogger('Auth');
+
+/**
+ * Prompt the user to type the OTP in the terminal.
+ */
+function promptForOTP() {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    rl.question('\n>>> Enter OTP from your email: ', (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
 
 // Ensure debug dir exists
 const DEBUG_DIR = path.join(process.cwd(), 'debug');
@@ -324,15 +339,30 @@ async function handleOTPIfPresent(page) {
 
     if (!isSplitOtp && !singleOtpField) return true; // no OTP screen, all good
 
-    // ── Fetch OTP from Gmail ───────────────────────────────────────────────
+    // ── Get OTP from user (manual input) ──────────────────────────────────
+    // NOTE: Auto Gmail fetch is commented out — re-enable once OTP extraction is fixed.
 
+    await snap(page, 'otp_0_screen_detected');
+    log.info('========================================');
+    log.info('  OTP screen detected!');
+    log.info('  Check your email and enter the OTP:');
+    log.info('========================================');
+
+    const otp = await promptForOTP();
+    if (!otp) {
+      log.error('No OTP entered');
+      return false;
+    }
+    log.info(`OTP entered: ${otp}`);
+
+    /*
+    // ── Auto fetch OTP from Gmail (disabled) ──────────────────────────────
     const email = process.env.NAUKRI_EMAIL;
     const appPass = process.env.NAUKRI_EMAIL_APP_PASS;
     if (!appPass) {
       log.error('OTP screen detected but NAUKRI_EMAIL_APP_PASS not set in .env');
       return false;
     }
-
     log.info('Fetching OTP from Gmail...');
     const otp = await fetchNaukriOTP(email, appPass);
     if (!otp) {
@@ -340,6 +370,8 @@ async function handleOTPIfPresent(page) {
       return false;
     }
     log.info(`OTP retrieved: ${otp}`);
+    // ── End auto fetch ────────────────────────────────────────────────────
+    */
     await snap(page, 'otp_1_screen_before_fill');
 
     // ── Fill OTP ───────────────────────────────────────────────────────────
