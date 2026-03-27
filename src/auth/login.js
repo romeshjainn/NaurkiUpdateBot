@@ -172,20 +172,15 @@ async function findLoginEmailField(page, selectors) {
 
 /**
  * Detect OTP screen and fill it automatically from Gmail.
+ * Selectors are loaded from config/selectors.json (otpForm section).
  * Returns true if no OTP needed or OTP succeeded, false if failed.
  */
 async function handleOTPIfPresent(page) {
-  try {
-    // Common OTP input selectors Naukri uses
-    const otpSelectors = [
-      'input[placeholder*="OTP" i]',
-      'input[placeholder*="verification" i]',
-      'input[name="otp"]',
-      'input[type="tel"][maxlength="6"]',
-      'input[maxlength="6"]',
-      'input[autocomplete="one-time-code"]',
-    ];
+  const selectors = loadSelectors();
+  const otpSelectors = selectors.otpForm.otpField;
+  const submitSelectors = selectors.otpForm.submitButton;
 
+  try {
     let otpField = null;
     for (const sel of otpSelectors) {
       try {
@@ -203,7 +198,7 @@ async function handleOTPIfPresent(page) {
     const email = process.env.NAUKRI_EMAIL;
     const appPass = process.env.NAUKRI_EMAIL_APP_PASS;
     if (!appPass) {
-      log.error('OTP screen detected but NAUKRI_EMAIL_APP_PASS not set');
+      log.error('OTP screen detected but NAUKRI_EMAIL_APP_PASS not set in .env');
       return false;
     }
 
@@ -220,19 +215,13 @@ async function handleOTPIfPresent(page) {
     await simulateTyping(page, otpField, otp);
     await randomDelay(500, 1000);
 
-    // Click submit/verify button
-    const submitSelectors = [
-      'button[type="submit"]',
-      'button:has-text("Verify")',
-      'button:has-text("Submit")',
-      'button:has-text("Continue")',
-    ];
+    // Click submit/verify button using class-based selectors from config
     for (const sel of submitSelectors) {
       try {
         const btn = page.locator(sel).first();
         if (await btn.isVisible({ timeout: 2000 })) {
           await btn.click();
-          log.info('OTP submitted');
+          log.info(`OTP submitted via: ${sel}`);
           await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
           return true;
         }

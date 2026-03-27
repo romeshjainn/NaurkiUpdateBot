@@ -47,5 +47,28 @@
   "resumeUpload": {
     "label": "Resume upload",
     "triggerSelector": "input.dummyUpload"
+  },
+  "otpForm": {
+    "label": "OTP verification screen",
+    "otpField": [
+      "input#otpField",
+      "input.otpInput",
+      "input[class*='otp' i]",
+      "input[placeholder*='OTP' i]",
+      "input[placeholder*='verification' i]",
+      "input[name='otp']",
+      "input[autocomplete='one-time-code']",
+      "input[type='tel'][maxlength='6']",
+      "input[maxlength='6']"
+    ],
+    "submitButton": [
+      "button.loginButton",
+      "button[class*='verify' i]",
+      "button[class*='submit' i]",
+      "button[type='submit']:has-text('Verify')",
+      "button[type='submit']:has-text('Submit')",
+      "button[type='submit']:has-text('Continue')",
+      "button[type='submit']"
+    ]
   }
 }
