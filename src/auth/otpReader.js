@@ -49,32 +49,43 @@ async function fetchNaukriOTP(emailAddress, appPassword) {
 
   await client.connect();
 
+  // Gmail splits emails across tabs (Primary, Updates, Promotions etc.).
+  // In IMAP each tab is a separate folder — searching only INBOX misses them.
+  // '[Gmail]/All Mail' covers every label/tab so nothing is skipped.
+  const FOLDERS = ['[Gmail]/All Mail', 'INBOX'];
+
   try {
     while (Date.now() < deadline) {
-      await client.mailboxOpen('INBOX');
+      for (const folder of FOLDERS) {
+        try {
+          await client.mailboxOpen(folder);
+        } catch {
+          log.info(`Folder "${folder}" not accessible, skipping`);
+          continue;
+        }
 
-      // Search all (seen + unseen) from info@naukri.com only — we sort by date ourselves
-      const uids = await client.search({ since, from: 'info@naukri.com' });
+        // Search all (seen + unseen) from info@naukri.com — sort by date ourselves
+        const uids = await client.search({ since, from: 'info@naukri.com' });
+        log.info(`[${folder}] Found ${uids.length} email(s) from info@naukri.com`);
 
-      if (uids.length > 0) {
-        // Fetch envelope (date) + source for each match, then sort newest-first by actual sent date
+        if (uids.length === 0) continue;
+
+        // Fetch envelope (date) + source, sort newest-first
         const candidates = [];
         for (const uid of uids) {
           try {
             const msg = await client.fetchOne(uid, { envelope: true, source: true });
             const sentAt = msg.envelope?.date ? new Date(msg.envelope.date).getTime() : 0;
             candidates.push({ uid, sentAt, text: msg.source.toString() });
-          } catch { /* skip malformed message */ }
+          } catch { /* skip malformed */ }
         }
-
-        // Sort descending — newest email first
         candidates.sort((a, b) => b.sentAt - a.sentAt);
 
         for (const { uid, sentAt, text } of candidates) {
           const otp = extractOTP(text);
           if (otp) {
             const age = Math.round((Date.now() - sentAt) / 1000);
-            log.info(`OTP found in email (sent ${age}s ago, uid ${uid}): ${otp}`);
+            log.info(`OTP found in "${folder}" (sent ${age}s ago, uid ${uid}): ${otp}`);
             await client.messageFlagsAdd(uid, ['\\Seen']);
             return otp;
           }
