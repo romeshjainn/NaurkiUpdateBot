@@ -4,6 +4,7 @@ const { createComponentLogger } = require('../utils/logger');
 const { loadSelectors, loadAppConfig } = require('../utils/config');
 const { randomDelay, addNetworkDelay } = require('./delays');
 const { sendNotification } = require('../utils/mailer');
+const { snap } = require('../utils/screenshot');
 
 const RESUME_UPLOAD_NAME = 'RomeshJain_SoftwareEngineer_Resume.pdf';
 
@@ -35,6 +36,7 @@ async function uploadResume(page, resumePath) {
     await randomDelay(2000, 3000);
     await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
     await randomDelay(1000, 1500);
+    await snap(page, 'resume_1_profile_page');
 
     // Wait for the "Update resume" button
     const trigger = page.locator(selectors.resumeUpload.triggerSelector).first();
@@ -54,6 +56,7 @@ async function uploadResume(page, resumePath) {
       buffer: fs.readFileSync(resolvedPath),
     });
     log.info(`File selected as "${RESUME_UPLOAD_NAME}". Waiting for upload to complete...`);
+    await snap(page, 'resume_2_file_selected');
 
     // Wait for upload processing
     await randomDelay(5000, 8000);
@@ -70,6 +73,7 @@ async function uploadResume(page, resumePath) {
       log.warn('No upload notification detected — upload may still have succeeded.');
     }
 
+    await snap(page, 'resume_3_upload_done');
     await randomDelay(2000, 3000);
     log.success('Resume upload complete');
     await sendNotification(

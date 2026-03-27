@@ -3,6 +3,7 @@ const { loadJsonConfig, saveJsonConfig, loadSelectors } = require('../utils/conf
 const { randomDelay } = require('./delays');
 const { navigateToProfileModal, clearAndType, clickSaveAndWait } = require('../browser/pageHelpers');
 const { sendNotification } = require('../utils/mailer');
+const { snap } = require('../utils/screenshot');
 
 const log = createComponentLogger('HeadlineUpdater');
 
@@ -27,6 +28,7 @@ async function updateHeadlineOnProfile(page, newHeadline) {
   try {
     // Navigate to profile, hover section, click pencil, wait for form
     await navigateToProfileModal(page, cfg);
+    await snap(page, 'headline_1_form_open');
 
     const textarea = page.locator(cfg.textareaSelector).first();
     await textarea.waitFor({ state: 'visible', timeout: 8000 });
@@ -34,8 +36,10 @@ async function updateHeadlineOnProfile(page, newHeadline) {
     log.info('Typing new headline...');
     await clearAndType(page, textarea, newHeadline);
     await randomDelay(800, 1500);
+    await snap(page, 'headline_2_typed');
 
     await clickSaveAndWait(page, cfg.saveButtonSelector);
+    await snap(page, 'headline_3_saved');
 
     log.success(`Headline updated: "${newHeadline.substring(0, 60)}..."`);
     await sendNotification(

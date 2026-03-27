@@ -4,6 +4,7 @@ const { createComponentLogger } = require('../utils/logger');
 const { loadSelectors, loadAppConfig } = require('../utils/config');
 const { randomDelay, simulateTyping } = require('../automation/delays');
 const { fetchNaukriOTP } = require('./otpReader');
+const { snap } = require('../utils/screenshot');
 
 const log = createComponentLogger('Auth');
 
@@ -146,6 +147,7 @@ async function performLogin(page, email, password) {
     await emailField.fill('');
     await simulateTyping(page, emailField, email);
     await randomDelay(500, 1000);
+    await snap(page, 'login_1_email_typed');
 
     // Find password field
     let passwordField = null;
@@ -173,6 +175,7 @@ async function performLogin(page, email, password) {
     await passwordField.fill('');
     await simulateTyping(page, passwordField, password);
     await randomDelay(800, 1500);
+    await snap(page, 'login_2_password_typed');
 
     // Find and click login button
     let loginButton = null;
@@ -199,6 +202,7 @@ async function performLogin(page, email, password) {
     await loginButton.click();
 
     log.info('Login button clicked. Waiting for response...');
+    await snap(page, 'login_3_button_clicked');
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
     await randomDelay(2000, 3000);
 
@@ -224,6 +228,7 @@ async function performLogin(page, email, password) {
       return false;
     }
 
+    await snap(page, 'login_4_success');
     log.success('Login successful!');
     return true;
   } catch (err) {
@@ -335,6 +340,7 @@ async function handleOTPIfPresent(page) {
       return false;
     }
     log.info(`OTP retrieved: ${otp}`);
+    await snap(page, 'otp_1_screen_before_fill');
 
     // ── Fill OTP ───────────────────────────────────────────────────────────
 
@@ -365,6 +371,7 @@ async function handleOTPIfPresent(page) {
     }
 
     await randomDelay(500, 1000);
+    await snap(page, 'otp_2_filled');
 
     // ── Submit ─────────────────────────────────────────────────────────────
 
@@ -375,6 +382,7 @@ async function handleOTPIfPresent(page) {
           await btn.click();
           log.info(`OTP submitted via: ${sel}`);
           await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+          await snap(page, 'otp_3_submitted');
           return true;
         }
       } catch { /* try next */ }

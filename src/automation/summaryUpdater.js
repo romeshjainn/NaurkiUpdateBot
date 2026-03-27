@@ -3,6 +3,7 @@ const { loadJsonConfig, saveJsonConfig, loadSelectors } = require('../utils/conf
 const { randomDelay } = require('./delays');
 const { navigateToProfileModal, clearAndType, clickSaveAndWait } = require('../browser/pageHelpers');
 const { sendNotification } = require('../utils/mailer');
+const { snap } = require('../utils/screenshot');
 
 const log = createComponentLogger('SummaryUpdater');
 
@@ -27,6 +28,7 @@ async function updateSummaryOnProfile(page, newSummary) {
   try {
     // Navigate to profile, hover section, click pencil, wait for form
     await navigateToProfileModal(page, cfg);
+    await snap(page, 'summary_1_form_open');
 
     const textarea = page.locator(cfg.textareaSelector).first();
     await textarea.waitFor({ state: 'visible', timeout: 8000 });
@@ -34,8 +36,10 @@ async function updateSummaryOnProfile(page, newSummary) {
     log.info('Typing new summary...');
     await clearAndType(page, textarea, newSummary);
     await randomDelay(800, 1500);
+    await snap(page, 'summary_2_typed');
 
     await clickSaveAndWait(page, cfg.saveButtonSelector);
+    await snap(page, 'summary_3_saved');
 
     log.success(`Summary updated (${newSummary.length} chars)`);
     await sendNotification(
