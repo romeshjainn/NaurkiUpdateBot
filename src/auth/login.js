@@ -277,28 +277,49 @@ async function findLoginEmailField(page, selectors) {
 
 /**
  * Detect OTP screen and fill it automatically from Gmail.
+ * Handles two layouts Naukri uses:
+ *   1. Split — six individual tel inputs (Input_1 … Input_6), one digit each
+ *   2. Single — one input for the full 6-digit code
  * Selectors are loaded from config/selectors.json (otpForm section).
  * Returns true if no OTP needed or OTP succeeded, false if failed.
  */
 async function handleOTPIfPresent(page) {
   const selectors = loadSelectors();
-  const otpSelectors = selectors.otpForm.otpField;
-  const submitSelectors = selectors.otpForm.submitButton;
 
   try {
-    let otpField = null;
-    for (const sel of otpSelectors) {
+    // ── Detect OTP screen ──────────────────────────────────────────────────
+
+    // Check for split OTP (6 individual boxes) — this is what Naukri currently shows
+    let isSplitOtp = false;
+    for (const sel of selectors.otpForm.splitOtpFirstField) {
       try {
         const el = page.locator(sel).first();
         if (await el.isVisible({ timeout: 3000 })) {
-          otpField = el;
-          log.info(`OTP screen detected (field: ${sel})`);
+          isSplitOtp = true;
+          log.info(`OTP screen detected — split layout (first field: ${sel})`);
           break;
         }
       } catch { /* try next */ }
     }
 
-    if (!otpField) return true; // no OTP screen, all good
+    // Fallback: check for single OTP field
+    let singleOtpField = null;
+    if (!isSplitOtp) {
+      for (const sel of selectors.otpForm.otpField) {
+        try {
+          const el = page.locator(sel).first();
+          if (await el.isVisible({ timeout: 2000 })) {
+            singleOtpField = el;
+            log.info(`OTP screen detected — single field layout (${sel})`);
+            break;
+          }
+        } catch { /* try next */ }
+      }
+    }
+
+    if (!isSplitOtp && !singleOtpField) return true; // no OTP screen, all good
+
+    // ── Fetch OTP from Gmail ───────────────────────────────────────────────
 
     const email = process.env.NAUKRI_EMAIL;
     const appPass = process.env.NAUKRI_EMAIL_APP_PASS;
@@ -313,15 +334,41 @@ async function handleOTPIfPresent(page) {
       log.error('Could not retrieve OTP from Gmail');
       return false;
     }
+    log.info(`OTP retrieved: ${otp}`);
 
-    log.info(`Entering OTP: ${otp}`);
-    await otpField.click();
-    await randomDelay(300, 600);
-    await simulateTyping(page, otpField, otp);
+    // ── Fill OTP ───────────────────────────────────────────────────────────
+
+    if (isSplitOtp) {
+      // Type one digit into each box
+      const digits = otp.split('');
+      for (let i = 0; i < selectors.otpForm.splitOtpAllFields.length; i++) {
+        const digit = digits[i];
+        if (!digit) break;
+        const sel = selectors.otpForm.splitOtpAllFields[i];
+        try {
+          const el = page.locator(sel).first();
+          await el.click();
+          await randomDelay(100, 200);
+          await el.fill(digit);
+          await randomDelay(80, 150);
+          log.info(`Filled box ${i + 1} (${sel}) with digit "${digit}"`);
+        } catch (err) {
+          log.error(`Failed to fill OTP box ${i + 1} (${sel}): ${err.message}`);
+          return false;
+        }
+      }
+    } else {
+      // Single field — type the full code
+      await singleOtpField.click();
+      await randomDelay(300, 600);
+      await simulateTyping(page, singleOtpField, otp);
+    }
+
     await randomDelay(500, 1000);
 
-    // Click submit/verify button using class-based selectors from config
-    for (const sel of submitSelectors) {
+    // ── Submit ─────────────────────────────────────────────────────────────
+
+    for (const sel of selectors.otpForm.submitButton) {
       try {
         const btn = page.locator(sel).first();
         if (await btn.isVisible({ timeout: 2000 })) {

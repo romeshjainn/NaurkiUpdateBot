@@ -50,6 +50,18 @@
   },
   "otpForm": {
     "label": "OTP verification screen",
+    "splitOtpFirstField": [
+      "input#Input_1",
+      "input[id^='Input_'][type='tel']"
+    ],
+    "splitOtpAllFields": [
+      "input#Input_1",
+      "input#Input_2",
+      "input#Input_3",
+      "input#Input_4",
+      "input#Input_5",
+      "input#Input_6"
+    ],
     "otpField": [
       "input#otpField",
       "input.otpInput",
@@ -62,9 +74,9 @@
       "input[maxlength='6']"
     ],
     "submitButton": [
+      "button.verify-button",
       "button.loginButton",
       "button[class*='verify' i]",
-      "button[class*='submit' i]",
       "button[type='submit']:has-text('Verify')",
       "button[type='submit']:has-text('Submit')",
       "button[type='submit']:has-text('Continue')",
