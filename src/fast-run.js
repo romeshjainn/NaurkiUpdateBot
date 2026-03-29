@@ -113,6 +113,7 @@ function clearGeneratedResume() {
 
 /**
  * Scrape the current headline and summary text from the Naukri profile page.
+ * Scrolls the full page in steps to trigger lazy-loaded sections before reading.
  * Returns empty strings if selectors don't match — graceful fallback.
  */
 async function scrapeProfileContent(page) {
@@ -123,6 +124,26 @@ async function scrapeProfileContent(page) {
   log.info('Scraping existing headline & summary from profile...');
   await page.goto(config.urls.profile, { waitUntil: 'domcontentloaded', timeout: 20000 });
   await randomDelay(2000, 3000);
+
+  // Scroll the page in steps so lazy-loaded sections (e.g. summary) render into the DOM
+  log.info('Scrolling page to trigger lazy-loaded sections...');
+  await page.evaluate(async () => {
+    await new Promise((resolve) => {
+      const distance = 300;
+      const delay    = 150;
+      const timer = setInterval(() => {
+        window.scrollBy(0, distance);
+        if (window.scrollY + window.innerHeight >= document.body.scrollHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, delay);
+    });
+  });
+  await randomDelay(1500, 2000);
+  // Scroll back to top so subsequent interactions work normally
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await randomDelay(500, 800);
 
   async function readText(selectorList) {
     for (const sel of selectorList) {
