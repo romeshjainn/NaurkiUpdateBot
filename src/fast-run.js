@@ -38,6 +38,7 @@ const { updateHeadlineOnProfile }                  = require('./automation/headl
 const { updateSummaryOnProfile }                   = require('./automation/summaryUpdater');
 const { executeResumeUploadCycle }                 = require('./automation/resumeUploader');
 const { randomDelay }                              = require('./automation/delays');
+const { sendRunSummary }                           = require('./utils/mailer');
 
 const log = createComponentLogger('FastRun');
 
@@ -184,14 +185,18 @@ async function run() {
   log.info(`Launching browser (headless: ${process.env.HEADLESS !== 'false'})...`);
   const { context, page } = await initBrowser();
 
-  let loggedIn        = false;
-  let generateOk      = false;
-  let resumeOk        = false;
-  let headlineOk      = false;
-  let summaryOk       = false;
-  let generatedPdf    = null;
+  const runTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+  let resumeUploadedAt  = null;
+  let loggedIn          = false;
+  let generateOk        = false;
+  let resumeOk          = false;
+  let headlineOk        = false;
+  let summaryOk         = false;
+  let generatedPdf      = null;
   let generatedHeadline = null;
   let generatedSummary  = null;
+  let previousHeadline  = '';
+  let previousSummary   = '';
 
   try {
     // ── 1. Login ───────────────────────────────────────────────────────────────
@@ -220,6 +225,8 @@ async function run() {
     log.info('━━━ Scraping profile + AI generation ━━━');
 
     const { existingHeadline, existingSummary } = await scrapeProfileContent(page);
+    previousHeadline = existingHeadline;
+    previousSummary  = existingSummary;
 
     log.info('Running 2 Groq calls (resume bullets + headline/summary)...');
     try {
@@ -238,6 +245,7 @@ async function run() {
     resumeOk = await executeResumeUploadCycle(page, config.resumePath, {
       prePath: generatedPdf || undefined,
     });
+    if (resumeOk) resumeUploadedAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     log.info(`Resume upload: ${resumeOk ? 'OK' : 'FAILED'}`);
 
     // ── 4. Wait 10–30 s then update headline/summary per today's action ────────
@@ -269,6 +277,27 @@ async function run() {
 
     // ── 5. Persist today's record ──────────────────────────────────────────────
     saveTodaysAction(todayAction);
+
+    // ── 6. Send summary email ──────────────────────────────────────────────────
+    const skipped = [];
+    if (!doHeadline) skipped.push('Headline');
+    if (!doSummary)  skipped.push('Summary');
+
+    log.info('Sending run summary email...');
+    await sendRunSummary({
+      runTime,
+      resumeUploadedAt: resumeUploadedAt || 'FAILED',
+      resumeOk,
+      pdfPath: generatedPdf,
+      previousHeadline,
+      newHeadline:      generatedHeadline || '',
+      headlineDone:     headlineOk,
+      previousSummary,
+      newSummary:       generatedSummary || '',
+      summaryDone:      summaryOk,
+      todayAction,
+      skipped,
+    });
 
     // ── Summary table ──────────────────────────────────────────────────────────
     const skip = '⏭ SKIP ';

@@ -4,8 +4,8 @@
 \LoadClass[9pt, letterpaper]{article}
 
 \RequirePackage[
-  top=0.24in, bottom=0.20in,
-  left=0.45in, right=0.45in
+  top=0.32in, bottom=0.25in,
+  left=0.50in, right=0.50in
 ]{geometry}
 \RequirePackage{xcolor}
 \RequirePackage{hyperref}
@@ -63,13 +63,13 @@
   {\small\bfseries\color{darkgray}}
   {}{0em}{\MakeUppercase}
   [{\color{rulegray}\vspace{1pt}\hrule}\vspace{2pt}]
-\titlespacing{\section}{0pt}{3pt}{1pt}
+\titlespacing{\section}{0pt}{5pt}{2.5pt}
 
 %% Bullet lists
 \setlist[itemize]{
   leftmargin=1.1em,
-  itemsep=0pt,
-  topsep=0pt,
+  itemsep=1.2pt,
+  topsep=1.2pt,
   parsep=0pt,
   partopsep=0pt,
   label=\textbullet
@@ -124,10 +124,10 @@
 
 %% Skill row
 \newcommand{\skillrow}[2]{%
-  \textbf{#1} & {\small #2} \\[0pt]
+  \textbf{#1} & {\small #2} \\[1.5pt]
 }
 
 %% Continuation row
 \newcommand{\skillcont}[1]{%
-  & {\small #1} \\[0pt]
+  & {\small #1} \\[1.5pt]
 }
