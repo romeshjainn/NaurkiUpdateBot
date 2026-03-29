@@ -14,7 +14,8 @@
     "dev": "nodemon src/index.js",
     "run:once": "node src/index.js --run-once",
     "cloud": "node src/cloud-run.js",
-    "debug-server": "node src/debug-server.js"
+    "debug-server": "node src/debug-server.js",
+    "generate-resume": "node src/resume_generator/generateResume.js"
   },
   "dependencies": {
     "dotenv": "^16.3.1",

@@ -93,23 +93,48 @@ async function uploadResume(page, resumePath) {
 }
 
 /**
+ * Resolve the resume path to upload.
+ * Tries to generate an AI-improved resume first; falls back to resumePath on failure.
+ * @param {string} fallbackPath - Path to the original resume PDF
+ * @returns {string} Path to the PDF that should be uploaded
+ */
+async function resolveResumePath(fallbackPath) {
+  try {
+    const { generateResume } = require('../resume_generator/generateResume');
+    log.info('Generating AI-improved resume...');
+    const generatedPath = await generateResume();
+    log.success(`AI resume generated: ${generatedPath}`);
+    return generatedPath;
+  } catch (err) {
+    log.warn(`AI resume generation failed (${err.message}) — falling back to ${fallbackPath}`);
+    return fallbackPath;
+  }
+}
+
+/**
  * Execute the resume upload cycle.
+ * Generates an AI-improved resume first; falls back to the original if generation fails.
+ * Pass options.prePath to skip generation and use a pre-generated PDF directly.
  * @param {object} page - Playwright page
- * @param {string} resumePath - Path to resume PDF
+ * @param {string} resumePath - Path to fallback resume PDF
+ * @param {object} [options]
+ * @param {string} [options.prePath] - Pre-generated PDF path — skips AI generation
  * @returns {boolean} Success
  */
-async function executeResumeUploadCycle(page, resumePath) {
+async function executeResumeUploadCycle(page, resumePath, options = {}) {
   log.info('=== Starting Resume Upload ===');
 
   try {
     await randomDelay(2000, 4000);
 
-    let success = await uploadResume(page, resumePath);
+    const pathToUpload = options.prePath || await resolveResumePath(resumePath);
+
+    let success = await uploadResume(page, pathToUpload);
 
     if (!success) {
       log.warn('Upload failed. Retrying in 5 seconds...');
       await randomDelay(5000, 7000);
-      success = await uploadResume(page, resumePath);
+      success = await uploadResume(page, pathToUpload);
     }
 
     log.info(`Resume upload: ${success ? 'SUCCESS' : 'FAILED'}`);

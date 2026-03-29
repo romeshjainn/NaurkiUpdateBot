@@ -4,7 +4,13 @@
       "Bash(find /c/Users/romes/Downloads/naukri-automation-bot/naukri-automation-bot -not -path */node_modules* -not -path */logs* -not -path */debug* -type f -o -type d)",
       "Bash(node:*)",
       "Bash(npm run:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(winget install:*)",
+      "Bash(powershell -Command \"Invoke-RestMethod -Uri 'https://api.github.com/repos/tectonic-typesetting/tectonic/releases/latest' | Select-Object -ExpandProperty tag_name\")",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic@0.15.0/tectonic-0.15.0-x86_64-pc-windows-msvc.zip'' -OutFile ''$env:TEMP\\\\tectonic.zip''\")",
+      "Bash(powershell -Command \"& { Invoke-WebRequest -Uri ''https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic@0.15.0/tectonic-0.15.0-x86_64-pc-windows-msvc.zip'' -OutFile ''C:/Windows/Temp/tectonic.zip''; Write-Host ''Done'' }\")",
+      "Bash(powershell -Command \"Expand-Archive -Path 'C:/Windows/Temp/tectonic.zip' -DestinationPath 'C:/Windows/Temp/tectonic_extract' -Force; Copy-Item 'C:/Windows/Temp/tectonic_extract/tectonic.exe' 'E:/BOTS/NodeNaurkiBot/tectonic_bin/tectonic.exe' -Force; Write-Host 'Extracted'\")",
+      "Bash(E:/BOTS/NodeNaurkiBot/tectonic_bin/tectonic.exe --version)"
     ]
   }
 }

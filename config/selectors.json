@@ -1,86 +1,102 @@
-{
-  "loginNavTrigger": {
-    "label": "Login nav button",
-    "selectors": [
-      "a[href*='nlogin']",
-      "a.nI-gNb-lg1__login",
-      "a[title='Jobseeker Login']",
-      "a[title='Login']",
-      ".login-register a",
-      "a:has-text('Login')"
-    ]
-  },
-  "loginForm": {
-    "emailField": [
-      "input#usernameField",
-      "input[placeholder*='Enter your active Email' i]",
-      "input[type='text'][name='username']",
-      "input[name='username']"
-    ],
-    "passwordField": [
-      "input#passwordField",
-      "input[type='password'][name='password']",
-      "input[placeholder*='password' i]",
-      "input[name='password']"
-    ],
-    "loginButton": [
-      "button.loginButton",
-      "button[type='submit']:has-text('Login')",
-      "button[type='submit']",
-      "input[type='submit']"
-    ]
-  },
-  "resumeHeadlineField": {
-    "label": "Resume headline",
-    "editTrigger": ".widgetHead:has(.widgetTitle:text('Resume headline')) span.edit.icon",
-    "formSelector": "form[name='resumeHeadlineForm']",
-    "textareaSelector": "textarea#resumeHeadlineTxt",
-    "saveButtonSelector": "form[name='resumeHeadlineForm'] button.btn-dark-ot"
-  },
-  "profileSummaryField": {
-    "label": "Profile summary",
-    "editTrigger": ".widgetHead:has(.widgetTitle:text('Profile summary')) span.edit.icon",
-    "formSelector": "form[name='profileSummaryForm']",
-    "textareaSelector": "textarea#profileSummaryTxt",
-    "saveButtonSelector": "form[name='profileSummaryForm'] button.btn-dark-ot"
-  },
-  "resumeUpload": {
-    "label": "Resume upload",
-    "triggerSelector": "input.dummyUpload"
-  },
-  "otpForm": {
-    "label": "OTP verification screen",
-    "splitOtpFirstField": [
-      "input#Input_1",
-      "input[id^='Input_'][type='tel']"
-    ],
-    "splitOtpAllFields": [
-      "input#Input_1",
-      "input#Input_2",
-      "input#Input_3",
-      "input#Input_4",
-      "input#Input_5",
-      "input#Input_6"
-    ],
-    "otpField": [
-      "input#otpField",
-      "input.otpInput",
-      "input[class*='otp' i]",
-      "input[placeholder*='OTP' i]",
-      "input[placeholder*='verification' i]",
-      "input[name='otp']",
-      "input[autocomplete='one-time-code']",
-      "input[type='tel'][maxlength='6']",
-      "input[maxlength='6']"
-    ],
-    "submitButton": [
-      "button.verify-button",
-      "button.loginButton",
-      "button[class*='verify' i]",
-      "button[type='submit']:has-text('Verify')",
-      "button[type='submit']:has-text('Submit')",
-      "button[type='submit']:has-text('Continue')",
-      "button[type='submit']"
-    ]
+  {
+    "loginNavTrigger": {
+      "label": "Login nav button",
+      "selectors": [
+        "a[href*='nlogin']",
+        "a.nI-gNb-lg1__login",
+        "a[title='Jobseeker Login']",
+        "a[title='Login']",
+        ".login-register a",
+        "a:has-text('Login')"
+      ]
+    },
+    "loginForm": {
+      "emailField": [
+        "input#usernameField",
+        "input[placeholder*='Enter your active Email' i]",
+        "input[type='text'][name='username']",
+        "input[name='username']"
+      ],
+      "passwordField": [
+        "input#passwordField",
+        "input[type='password'][name='password']",
+        "input[placeholder*='password' i]",
+        "input[name='password']"
+      ],
+      "loginButton": [
+        "button.loginButton",
+        "button[type='submit']:has-text('Login')",
+        "button[type='submit']",
+        "input[type='submit']"
+      ]
+    },
+    "profileContentRead": {
+      "headlineSelectors": [
+        ".resumeHeadline",
+        ".headline-section .info",
+        "[class*='resumeHeadline']:not(textarea):not(input)",
+        ".widgetHead:has(.widgetTitle:text('Resume headline')) + .widgetSection",
+        "textarea#resumeHeadlineTxt"
+      ],
+      "summarySelectors": [
+        ".pSummary",
+        ".summary-section .info",
+        "[class*='profileSummary']:not(textarea):not(input)",
+        ".widgetHead:has(.widgetTitle:text('Profile summary')) + .widgetSection",
+        "textarea#profileSummaryTxt"
+      ]
+    },
+    "resumeHeadlineField": {
+      "label": "Resume headline",
+      "editTrigger": ".widgetHead:has(.widgetTitle:text('Resume headline')) span.edit.icon",
+      "formSelector": "form[name='resumeHeadlineForm']",
+      "textareaSelector": "textarea#resumeHeadlineTxt",
+      "saveButtonSelector": "form[name='resumeHeadlineForm'] button.btn-dark-ot"
+    },
+    "profileSummaryField": {
+      "label": "Profile summary",
+      "editTrigger": ".widgetHead:has(.widgetTitle:text('Profile summary')) span.edit.icon",
+      "formSelector": "form[name='profileSummaryForm']",
+      "textareaSelector": "textarea#profileSummaryTxt",
+      "saveButtonSelector": "form[name='profileSummaryForm'] button.btn-dark-ot"
+    },
+    "resumeUpload": {
+      "label": "Resume upload",
+      "triggerSelector": "input.dummyUpload"
+    },
+    "otpForm": {
+      "label": "OTP verification screen",
+      "splitOtpFirstField": [
+        "input#Input_1",
+        "input[id^='Input_'][type='tel']"
+      ],
+      "splitOtpAllFields": [
+        "input#Input_1",
+        "input#Input_2",
+        "input#Input_3",
+        "input#Input_4",
+        "input#Input_5",
+        "input#Input_6"
+      ],
+      "otpField": [
+        "input#otpField",
+        "input.otpInput",
+        "input[class*='otp' i]",
+        "input[placeholder*='OTP' i]",
+        "input[placeholder*='verification' i]",
+        "input[name='otp']",
+        "input[autocomplete='one-time-code']",
+        "input[type='tel'][maxlength='6']",
+        "input[maxlength='6']"
+      ],
+      "submitButton": [
+        "button.verify-button",
+        "button.loginButton",
+        "button[class*='verify' i]",
+        "button[type='submit']:has-text('Verify')",
+        "button[type='submit']:has-text('Submit')",
+        "button[type='submit']:has-text('Continue')",
+        "button[type='submit']"
+      ]
+    }
   }
-}

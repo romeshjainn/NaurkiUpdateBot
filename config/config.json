@@ -3,7 +3,7 @@
   "resumeFileName": "RomeshJain_SoftwareEngineer_2years",
   "maxRetries": 3,
   "retryDelayMs": 2000,
-  "headless": true,
+  "headless": false,
   "slowMotion": 100,
   "updateWindowStart": 9,
   "updateWindowEnd": 12,
